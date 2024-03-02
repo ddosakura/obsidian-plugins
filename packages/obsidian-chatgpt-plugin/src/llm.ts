@@ -1,12 +1,12 @@
-import { LangChainTracer } from "langchain/callbacks";
 import { Client } from "langsmith";
+import { LangChainTracer } from "langchain/callbacks";
+import { FakeListLLM } from "langchain/llms/fake";
 import { ChatOpenAI } from "@langchain/openai";
+
 import {
   DEFAULT_SETTINGS,
   type ObsidianChatGPTPluginSettings,
 } from "./settings";
-
-import { FakeListLLM } from "langchain/llms/fake";
 
 const store: {
   settings: ObsidianChatGPTPluginSettings;
@@ -31,29 +31,37 @@ export function updateLLM(settings: ObsidianChatGPTPluginSettings) {
     : undefined;
 }
 
-export async function* chat(prompt: string) {
-  // const chat = new ChatOpenAI({
-  //   openAIApiKey: store.settings.OPENAI_API_KEY,
-  //   configuration: {
-  //     baseURL: store.settings.OPENAI_API_BASE,
-  //   },
-  // });
-  const chat = new FakeListLLM({
-    responses: [
-      "Because Oct 31 equals Dec 25",
-      "You 'console' them!",
-    ],
-    sleep: 100,
+const llm = new FakeListLLM({
+  responses: [
+    "Because Oct 31 equals Dec 25",
+    "You 'console' them!",
+  ],
+  sleep: 100,
+});
+
+export async function* chat0(input: any) {
+  const chat = new ChatOpenAI({
+    openAIApiKey: store.settings.OPENAI_API_KEY,
+    configuration: {
+      baseURL: store.settings.OPENAI_API_BASE,
+    },
   });
 
   const stream = await chat.stream(
-    [
-      ["human", prompt],
-    ],
+    input,
     store.tracer ? { callbacks: [store.tracer] } : {},
   );
   for await (const chunk of stream) {
-    // yield chunk.content;
+    yield chunk.content;
+  }
+}
+
+export async function* chat(input: any) {
+  const stream = await llm.stream(
+    input,
+    store.tracer ? { callbacks: [store.tracer] } : {},
+  );
+  for await (const chunk of stream) {
     yield chunk;
   }
 }

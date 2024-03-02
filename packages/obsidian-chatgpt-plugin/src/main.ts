@@ -2,7 +2,7 @@ import {
   App,
   // MarkdownView,
   Modal,
-  // Notice,
+  Notice,
   Plugin,
 } from "obsidian";
 
@@ -27,11 +27,18 @@ export default class ObsidianChatGPTPlugin extends Plugin {
       id: "summary",
       name: "Summary Current Note",
       async editorCallback(editor, _view) {
+        const chunks = chat([
+          ["system", "用一两百字总结下文"],
+          ["human", editor.getValue()],
+        ]);
         editor.replaceSelection("> ");
-        const chunks = chat(editor.getValue());
-        for await (const content of chunks) {
-          editor.replaceSelection(String(content));
+        let summary = "";
+        for await (const chunk of chunks) {
+          const content = String(chunk);
+          summary += content;
+          editor.replaceSelection(content);
         }
+        new Notice(`[AI] 生成完成 ${summary.length}`);
       },
       /*
       checkCallback: (checking) => {
@@ -82,7 +89,7 @@ class ChatModal extends Modal {
   }
 
   onOpen() {
-    if (this.content) return;
+    if (!this.content) return;
 
     store.plugin.set(this.plugin);
     this.component = new Component({
