@@ -1,8 +1,8 @@
 {
   "private": "true",
-  "name": "obsidian-chatgpt-plugin",
+  "name": "obsidian-render-plugin",
   "version": "1.0.0",
-  "description": "Provide ChatGPT function for observers",
+  "description": "Optimize Obsidian rendering effects",
   "main": "dist/main.js",
   "scripts": {
     "dev": "bun run ../../scripts/build.ts",
@@ -14,9 +14,5 @@
   "peerDependencies": {
     "obsidian": "latest",
     "svelte": "^4.2.12"
-  },
-  "dependencies": {
-    "@langchain/openai": "^0.0.15",
-    "langchain": "^0.1.25"
   }
 }
