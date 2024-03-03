@@ -1,5 +1,6 @@
 import {
   App,
+  type Command,
   // MarkdownView,
   Modal,
   Notice,
@@ -19,42 +20,28 @@ export default class ObsidianChatGPTPlugin extends Plugin {
   declare settings: ObsidianChatGPTPluginSettings;
   declare statusBarItemEl: HTMLElement;
 
-  async onload() {
-    await this.loadSettings();
+  onload() {
+    this.loadSettings();
     this.addSettingTab(new SettingTab(this.app, this));
+    this.addCommand(summaryCommand);
 
+    const { vault } = this.app;
     this.addCommand({
-      id: "summary",
-      name: "Summary Current Note",
-      async editorCallback(editor, _view) {
-        const chunks = chat([
-          ["system", "用一两百字总结下文"],
-          ["human", editor.getValue()],
-        ]);
-        editor.replaceSelection("> ");
-        let summary = "";
-        for await (const chunk of chunks) {
-          const content = String(chunk);
-          summary += content;
-          editor.replaceSelection(content);
-        }
-        new Notice(`[AI] 生成完成 ${summary.length}`);
+      id: "test",
+      name: "test",
+      async callback() {
+        // vault.getFiles().forEach((file) => {
+        //   console.log("file", file.path);
+        // });
+        const file = vault.getFileByPath("FakeListLLM.loom");
+        if (!file) return;
+        console.log(await vault.read(file));
       },
-      /*
-      checkCallback: (checking) => {
-        const markdownView = this.app.workspace.getActiveViewOfType(
-          MarkdownView,
-        );
-        if (markdownView) {
-          if (!checking) {
-            new ChatModal(this.app, this, markdownView.contentEl.textContent)
-              .open();
-          }
-          return true;
-        }
-      },
-      */
     });
+  }
+
+  onExternalSettingsChange() {
+    this.loadSettings();
   }
 
   onunload() {
@@ -76,6 +63,39 @@ export default class ObsidianChatGPTPlugin extends Plugin {
     await this.saveData(this.settings);
   }
 }
+
+const summaryCommand = {
+  id: "summary",
+  name: "Summary Current Note",
+  async editorCallback(editor, _view) {
+    const chunks = chat([
+      ["system", "用一两百字总结下文"],
+      ["human", editor.getValue()],
+    ]);
+    editor.replaceSelection("> ");
+    let summary = "";
+    for await (const chunk of chunks) {
+      const content = String(chunk);
+      summary += content;
+      editor.replaceSelection(content);
+    }
+    new Notice(`[AI] 生成完成 ${summary.length}`);
+  },
+  /*
+  checkCallback: (checking) => {
+    const markdownView = this.app.workspace.getActiveViewOfType(
+      MarkdownView,
+    );
+    if (markdownView) {
+      if (!checking) {
+        new ChatModal(this.app, this, markdownView.contentEl.textContent)
+          .open();
+      }
+      return true;
+    }
+  },
+  */
+};
 
 class ChatModal extends Modal {
   declare component: Component;
